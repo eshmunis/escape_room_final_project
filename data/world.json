@@ -1,0 +1,51 @@
+{
+  "rooms": {
+    "foyer": {
+      "description": "You wake up in the dusty foyer of an abandoned house. The air is cold, and you swear you hear faint footsteps upstairs. There’s a hallway to the north.",
+      "exits": {"north": "hallway"},
+      "items": ["flashlight"],
+      "puzzle": null
+    },
+    "hallway": {
+      "description": "The hallway is lined with broken picture frames. The floor creaks under your weight. There’s a locked door to the east and the foyer behind you to the south.",
+      "exits": {"south": "foyer", "east": "study"},
+      "items": ["note"],
+      "puzzle": "door_code"
+    },
+    "study": {
+      "description": "You step into a dusty study with books scattered everywhere. A window is cracked open, letting in a cold draft. This might be your way out… if you can figure it out.",
+      "exits": {},
+      "items": [],
+      "puzzle": "final_escape"
+    }
+  },
+  "items": {
+    "flashlight": {
+      "description": "An old flashlight. The batteries are weak, but it might help you read things in the dark."
+    },
+    "note": {
+      "description": "A torn piece of paper. Written in messy handwriting: 'Not everything is as it seems. Try 4-2-9.'"
+    }
+  },
+  "puzzles": {
+    "door_code": {
+      "question": "The study door has an old keypad lock. The note might be a clue. Enter the 3-digit code:",
+      "answer": "429",
+      "wrong_responses": [
+        "The keypad buzzes angrily. You hear footsteps creak closer…",
+        "Wrong code. The hallway lights flicker for just a second.",
+        "A cold draft brushes the back of your neck. That was not right."
+      ]
+    },
+    "final_escape": {
+      "question": "The window is jammed shut. You hear the footsteps getting closer. Type 'push window' to force it open:",
+      "answer": "push window",
+      "wrong_responses": [
+        "You slam against the window, but it won’t budge. The footsteps are right outside the study now.",
+        "Your hands slip. The glass rattles but doesn’t break.",
+        "A whisper brushes your ear: 'Don’t leave…' You shiver. Try again quickly!"
+      ]
+    }
+  },
+  "start_room": "foyer"
+}
