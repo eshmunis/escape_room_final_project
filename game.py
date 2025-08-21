@@ -8,8 +8,8 @@ Responsibilities:
 - Run the main loop with a global time limit
 """
 
+from stats import init_db, record_run, best_time
 import time
-import random
 from world_loader import load_world
 from room import Room
 from player import Player
@@ -452,6 +452,12 @@ def run_game(world_file="data/world.json"):
 
     # Create player
     player = Player(start_room)
+
+    # SQLite run log setup
+    init_db()  # ensures data/runs.sqlite and table exist
+    bt = best_time()
+    if bt is not None:
+        print(f"(Best escape time on this machine: {format_mmss(bt)})")
     
     start_time = time.monotonic()
     print(f"(You feel watched... You have {format_mmss(GAME_TIME_LIMIT)} to escape.)")
@@ -467,6 +473,9 @@ def run_game(world_file="data/world.json"):
         if remaining <= 0:
             print("\nA shadow looms behind you. Claws. Cold breath. Everything goes dark.")
             print("You ran out of time. The house keeps you forever.")
+            # Log failure run
+            elapsed = time.monotonic() - start_time
+            record_run(escaped=False, duration_sec=int(elapsed))
             break
         if remaining <= 60:
             print(f"(Hurry!!! Only {format_mmss(remaining)} left!)")
@@ -483,6 +492,9 @@ def run_game(world_file="data/world.json"):
 
         if verb in ("quit", "exit"):
             print("You step back into the silence. Game over.")
+            # Treat quitting as a non-escape run
+            elapsed = time.monotonic() - start_time
+            record_run(escaped=False, duration_sec=int(elapsed))
             break
         elif verb == "help":
             handle_help()
@@ -503,6 +515,8 @@ def run_game(world_file="data/world.json"):
             if result == "WIN":
                 elapsed = time.monotonic() - start_time
                 print(f"\nYou made it out! It took you {format_mmss(int(elapsed))}.")
+                # Log successful run
+                record_run(escaped=True, duration_sec=int(elapsed))
                 # “Close call” flair:
                 remaining = time_left(start_time)
                 if remaining <= 30:
