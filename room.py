@@ -18,6 +18,10 @@ class Room:
         self.description = description
         self.exits = exits or {}
         self.items = items or set()
+        
+        self.original_items = set(self.items) 
+        self.visited = False 
+
         self.puzzle = None
         if puzzle:
             p = dict(puzzle)
@@ -62,9 +66,18 @@ class Room:
 
     def items_text(self):
         """Return a friendly list of items in the room."""
-        if not self.items:
-            return "You see nothing useful here."
-        return "You see: " + ", ".join(sorted(self.items))
+        if self.items:
+            return "You see: " + ", ".join(sorted(self.items))
+        # No items visible
+        if self.puzzle and not self.puzzle.get("solved", False):
+        # Generic puzzle hint
+            return "How can you solve this? Maybe try typing 'solve'."
+            # If you want room-specific hints later, you could do:
+            # if self.name.lower() == "hallway":
+            #     return "That door looks like it needs a code. Try 'solve'."
+            # if self.name.lower() == "study":
+            #     return "It’s so dark… a light might help. Then try 'solve'."
+        return "You see nothing useful here."
 
     # Puzzle
     def has_puzzle(self):
@@ -88,8 +101,9 @@ class Room:
             return True, "The puzzle is already solved."
 
         # Regex pattern mode
-        if "pattern" in self.puzzle:
-            if re.fullmatch(self.puzzle["pattern"], user_answer.strip(), flags=re.IGNORECASE):
+        pattern = self.puzzle.get("pattern")
+        if pattern:
+            if re.fullmatch(pattern, user_answer.strip(), flags=re.IGNORECASE):
                 self.puzzle["solved"] = True
                 return True, "You solved the puzzle!"
             return False, "That doesn't match the required format."

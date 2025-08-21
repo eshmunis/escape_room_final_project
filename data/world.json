@@ -13,7 +13,7 @@
       "puzzle": "door_code"
     },
     "study": {
-      "description": "You step into a dusty study with books scattered everywhere. A window is cracked open, letting in a cold draft. This might be your way out… if you can figure it out.",
+      "description": "You step into a dusty study.\nIt's so dark you can barely make anything out, if only you had a light source.\nA cold draft creeps from a cracked window. This might be your way out... if you can figure it out...\nMaybe you should try to 'solve' the room.",
       "exits": {},
       "items": [],
       "puzzle": "final_escape"
