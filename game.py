@@ -161,12 +161,12 @@ def handle_solve(player, rooms):
 
 # Game loop
 
-def run_game():
+def run_game(world_file="data/world.json"):
     # Load world
     try:
-        world = load_world()  # reads data/world.json
+        world = load_world(world_file)  # reads data/world.json
     except FileNotFoundError:
-        print("Could not find data/world.json. Make sure the file exists.")
+        print(f"Could not find {world_file}. Make sure the file exists.")
         return
     except Exception as e:
         print("Failed to load world:", e)
