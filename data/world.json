@@ -32,7 +32,7 @@
       "question": "The study door has an old keypad lock. The note might be a clue. Enter the 3-digit code:",
       "answer": "429",
       "wrong_responses": [
-        "The keypad buzzes angrily. You hear footsteps creak closer…",
+        "The keypad buzzes angrily. You hear footsteps creak closer...",
         "Wrong code. The hallway lights flicker for just a second.",
         "A cold draft brushes the back of your neck. That was not right."
       ]

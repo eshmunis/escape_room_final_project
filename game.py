@@ -1,6 +1,11 @@
 """
-Connects the pieces: loads world.json, builds Room objects, creates Player,
-and runs the main command loop (go/take/look/inventory/solve/help/quit).
+Main game engine for the Escape Room.
+
+Responsibilities:
+- Load the world definition from JSON
+- Build Room and Player objects
+- Define command handlers (go, take, inspect, solve, etc.)
+- Run the main loop with a global time limit
 """
 
 import time
@@ -9,21 +14,49 @@ from world_loader import load_world
 from room import Room
 from player import Player
 
-GAME_TIME_LIMIT = 5 * 60  # 5 minutes in seconds
+# 8 minutes in seconds
+GAME_TIME_LIMIT = 8 * 60
 
 def time_left(start_time):
-    """Return remaining seconds (can be negative)."""
+    """
+    Calculate remaining time for the game.
+
+    Parameters:
+        start_time (float): Timestamp (from time.monotonic) when the game began.
+
+    Returns:
+        float: Number of seconds left (can be negative if time expired).
+    """
     return GAME_TIME_LIMIT - (time.monotonic() - start_time)
 
 def format_mmss(seconds):
+    """
+    Format seconds into MM:SS.
+
+    Parameters:
+        seconds (int or float): Number of seconds.
+
+    Returns:
+        str: Time formatted as minutes:seconds (e.g., "4:59").
+    """
     seconds = max(0, int(seconds))
     m, s = divmod(seconds, 60)
     return f"{m}:{s:02d}"
 
 # World construction helpers
-
 def build_rooms(world_data):
-    """Turn the JSON data into Room objects."""
+    """
+    Construct Room objects from world data.
+
+    Parameters:
+        world_data (dict): Parsed JSON data containing rooms and puzzles.
+
+    Returns:
+        dict[str, Room]: A mapping of room names to Room objects.
+
+    Side Effects:
+        Creates Room objects and attaches puzzles if present.
+    """
     rooms = {}
     puzzles = world_data.get("puzzles", {})
 
@@ -50,7 +83,7 @@ def build_rooms(world_data):
                     "pattern": p.get("pattern", ""),  
                     "solved": False,
                 }
-                # Optional spooky feedback on wrong answers
+                # Spooky feedback on wrong answers
                 if "wrong_responses" in p:
                     pdict["wrong_responses"] = p["wrong_responses"]
                 rooms[room_name].puzzle = pdict
@@ -59,7 +92,19 @@ def build_rooms(world_data):
 
 
 def describe_current_room(player, rooms):
-    """Print the current room description with support for revisits and item hints."""
+    """
+    Print the current room description, supporting revisits and hints.
+
+    Parameters:
+        player (Player): The active player object.
+        rooms (dict[str, Room]): All available rooms.
+
+    Returns:
+        None
+
+    Side Effects:
+        Prints room description, items, and exits to the console.
+    """
     room = rooms[player.location]
     print("\n=== {} ===".format(room.name.capitalize()))
 
@@ -87,8 +132,22 @@ def describe_current_room(player, rooms):
         print("Exits: " + ", ".join(room.exits.keys()))
 
 # Command handlers
-
 def handle_go(player, rooms, args):
+    """
+    Handle the 'go' command to move the player.
+
+    Parameters:
+        player (Player): The current player.
+        rooms (dict[str, Room]): All rooms.
+        args (list[str]): Command arguments (expected: direction).
+
+    Returns:
+        None
+
+    Side Effects:
+        Moves the player and prints new room description, or prints why
+        movement failed (e.g., puzzle unsolved, flashlight missing).
+    """
     if not args:
         print("Go where? Try: go north / go south / go east / go west")
         return
@@ -102,7 +161,7 @@ def handle_go(player, rooms, args):
     # Require flashlight to leave the foyer north
     if current.name == "foyer" and direction == "north" and not player.has_item("flashlight"):
         print("It’s too dark down the hallway. You’re too scared to go without a flashlight.")
-        # gentle hint if it’s in the room
+        # Gentle hint if it’s in the room
         if current.has_item("flashlight"):
             print("Maybe pick up the flashlight first (try: take flashlight).")
         return
@@ -118,6 +177,20 @@ def handle_go(player, rooms, args):
 
 
 def handle_take(player, rooms, args):
+    """
+    Handle the 'take' command to pick up items.
+
+    Parameters:
+        player (Player): The current player.
+        rooms (dict[str, Room]): All rooms.
+        args (list[str]): Command arguments (expected: item name).
+
+    Returns:
+        None
+
+    Side Effects:
+        Moves items from the room to the player’s inventory and prints feedback.
+    """
     if not args:
         print("Take what? Example: take key")
         return
@@ -142,6 +215,21 @@ def handle_take(player, rooms, args):
         print("With the flashlight in hand, the hallway looks a lot less terrifying. Try 'go north' now.")
 
 def handle_inspect(player, rooms, world_items, args):
+    """
+    Handle the 'inspect' command to examine an item.
+
+    Parameters:
+        player (Player): The current player.
+        rooms (dict[str, Room]): All rooms.
+        world_items (dict): Item details from world.json.
+        args (list[str]): Command arguments (expected: item name).
+
+    Returns:
+        None
+
+    Side Effects:
+        Prints inspection results to the console.
+    """
     if not args:
         print("Inspect what? Example: inspect flashlight")
         return
@@ -162,10 +250,35 @@ def handle_inspect(player, rooms, world_items, args):
 
 
 def handle_inventory(player):
+    """
+    Handle the 'inventory' command.
+
+    Parameters:
+        player (Player): The current player.
+
+    Returns:
+        None
+
+    Side Effects:
+        Prints a list of carried items.
+    """
     print(player.list_inventory())
 
 
 def handle_look(player, rooms):
+    """
+    Handle the 'look' command to re-describe the room.
+
+    Parameters:
+        player (Player): The current player.
+        rooms (dict[str, Room]): All rooms.
+
+    Returns:
+        None
+
+    Side Effects:
+        Prints room description, items, and exits.
+    """
     room = rooms[player.location]
 
     print(f"\n=== {room.name.title()} ===")
@@ -191,6 +304,18 @@ def handle_look(player, rooms):
 
 
 def handle_help():
+    """
+    Print a list of available commands.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+
+    Side Effects:
+        Prints help text to the console.
+    """
     print("Commands you can try:")
     print("  look           - describe the room again")
     print("  go <dir>       - move (north/south/east/west)")
@@ -204,18 +329,31 @@ def handle_help():
 
 
 def handle_solve(player, rooms):
+    """
+    Handle the 'solve' command for puzzles.
+
+    Parameters:
+        player (Player): The current player.
+        rooms (dict[str, Room]): All rooms.
+
+    Returns:
+        str | None: "WIN" if solving the Study puzzle ends the game, else None.
+
+    Side Effects:
+        Prompts the player for answers, updates puzzle state, prints feedback.
+    """
     room = rooms[player.location]
     if not room.has_puzzle():
         print("There’s nothing to solve here.")
         return
 
-    # --- Special two-step flow for the Study ---
+    # Special two-step flow for the Study
     if room.name == "study":
         # Stage flag stored on the room's puzzle dict
         lit = room.puzzle.get("lit", False)
 
         if not lit:
-            # Stage 1: it's dark—require the flashlight command
+            # Stage 1: it's dark-require the flashlight command
             print("It’s so dark you can barely see. If you have a flashlight, try typing 'flashlight'.")
             answer = input("> ").strip().lower()
 
@@ -235,7 +373,8 @@ def handle_solve(player, rooms):
                         import random
                         wr = random.choice(choices)
                 print(wr or "That doesn’t help in the dark.")
-            return  # end here; not solved yet
+            # end here; not solved yet
+            return
 
         # Stage 2: room is lit -> proceed to the existing window puzzle
         print(room.puzzle_question())  # from JSON: jammed window prompt
@@ -258,7 +397,7 @@ def handle_solve(player, rooms):
             print(wr or message)
         return
 
-    # --- Default behavior for all other rooms (e.g., hallway lock) ---
+    # Default behavior for all other rooms (e.g., hallway lock)
     print(room.puzzle_question())
     answer = input("> ").strip()
     success, message = room.try_solve_puzzle(answer)
@@ -267,7 +406,7 @@ def handle_solve(player, rooms):
         # Hallway convenience hint after unlocking
         if room.name == "hallway":
             print("You hear a metallic click from the east door. It’s unlocked now. You can go east.")
-        # If any other room needed special behavior, you could add it here.
+        # If any other room needed special behavior, I could add it here.
     else:
         wr = None
         if room.puzzle and "wrong_responses" in room.puzzle:
@@ -279,11 +418,25 @@ def handle_solve(player, rooms):
 
 
 # Game loop
-
 def run_game(world_file="data/world.json"):
+    """
+    Start the Escape Room game.
+
+    Parameters:
+        world_file (str, optional): Path to the JSON file that defines the world.
+            Defaults to "data/world.json".
+
+    Returns:
+        None
+
+    Side Effects:
+        Loads the world, creates a Player, runs the main game loop,
+        and prints output to the console.
+    """
     # Load world
     try:
-        world = load_world(world_file)  # reads data/world.json
+        # Reads data/world.json
+        world = load_world(world_file)
     except FileNotFoundError:
         print(f"Could not find {world_file}. Make sure the file exists.")
         return
@@ -350,7 +503,7 @@ def run_game(world_file="data/world.json"):
             if result == "WIN":
                 elapsed = time.monotonic() - start_time
                 print(f"\nYou made it out! It took you {format_mmss(int(elapsed))}.")
-                # Optional “close call” flair:
+                # “Close call” flair:
                 remaining = time_left(start_time)
                 if remaining <= 30:
                     print("That was close… you barely made it!")
