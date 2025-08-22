@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# SQLite databases
+*.sqlite
+runs.sqlite
+runs_test.sqlite
+
+# Pytest cache
+.pytest_cache/
