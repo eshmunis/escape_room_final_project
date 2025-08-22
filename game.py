@@ -520,7 +520,7 @@ def run_game(world_file="data/world.json"):
                 # “Close call” flair:
                 remaining = time_left(start_time)
                 if remaining <= 30:
-                    print("That was close… you barely made it!")
+                    print("That was close... you barely made it!")
                 break
         else:
             print("I don’t understand that. Try 'help'.")
